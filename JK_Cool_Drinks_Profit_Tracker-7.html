@@ -1,0 +1,56 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#6d28d9"><title>JK Cool Drinks Profit Tracker</title>
+<style>*{box-sizing:border-box}body{margin:0;font-family:system-ui;background:#f5f3ff;color:#171321}header{background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;padding:22px 18px 26px;border-radius:0 0 28px 28px}header h1{margin:0;font-size:25px}header p{margin:5px 0 0;opacity:.85}main{max-width:650px;margin:auto;padding:16px}.card{background:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 5px 20px #25104b12}label{font-weight:700;font-size:14px;display:block;margin:12px 0 6px}input{width:100%;padding:14px;border:1px solid #ddd6fe;border-radius:12px;font-size:17px}.primary{background:#6d28d9;color:#fff;width:100%;margin-top:16px;border:0;border-radius:13px;padding:14px;font-weight:800;font-size:16px}.secondary{background:#ede9fe;color:#4c1d95;border:0;border-radius:13px;padding:14px;font-weight:800}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#faf9ff;border-radius:15px;padding:14px}.stat small{color:#6b6475}.stat b{display:block;font-size:21px;margin-top:3px}.profit{background:#ecfdf5}.row{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #eee;padding:11px 0}.actions{display:flex;gap:8px;margin-top:10px}.actions button{flex:1}.danger{color:#b91c1c}.row button{padding:8px 10px;font-size:13px;margin-left:4px}footer{text-align:center;color:#777;font-size:12px;padding:12px}</style></head>
+<body><header><h1>🥤 JK Cool Drinks</h1><p>Business Profit Tracker</p></header><main>
+<section class="card"><h2>Today's Entry</h2><label>Date</label><input id="date" type="date"><label>Daily Investment / Other Expenses (₹)</label><input id="expense" type="number" min="0" placeholder="e.g. 1000"><label>Chicken Bill (₹)</label><input id="chicken" type="number" min="0" placeholder="e.g. 500"><label>Worker Salary (₹)</label><input id="salary" type="number" min="0" placeholder="e.g. 300"><label>Online Sales (₹)</label><input id="online" type="number" min="0" placeholder="UPI / card"><label>Cash in Hand / Cash Sales (₹)</label><input id="cash" type="number" min="0" placeholder="e.g. 2500"><button class="primary" onclick="saveEntry()">Save Today's Report</button></section>
+<section class="card"><h2>Today</h2><div class="grid"><div class="stat"><small>Total Sales</small><b id="sales">₹0</b></div><div class="stat"><small>Other Expenses</small><b id="expenses">₹0</b></div><div class="stat"><small>Chicken Bill</small><b id="chickenOut">₹0</b></div><div class="stat"><small>Worker Salary</small><b id="salaryOut">₹0</b></div><div class="stat profit"><small>Profit</small><b id="profit">₹0</b></div><div class="stat"><small>Profit %</small><b id="margin">0%</b></div></div></section>
+<section class="card"><h2>Reports</h2><div class="grid"><div class="stat"><small>7-Day Sales</small><b id="weekSales">₹0</b></div><div class="stat"><small>7-Day Profit</small><b id="weekProfit">₹0</b></div><div class="stat"><small>30-Day Sales</small><b id="monthSales">₹0</b></div><div class="stat"><small>30-Day Profit</small><b id="monthProfit">₹0</b></div></div><div class="actions"><button class="secondary" onclick="shareReport()">Share Report</button><button class="secondary" onclick="clearAll()">Clear Data</button></div></section>
+
+<section class="card">
+<h2>👷 Worker Details</h2>
+<label>Worker Name</label><input id="workerName" placeholder="Enter worker name">
+<label>Worker Address</label><input id="workerAddress" placeholder="Enter worker address">
+<button class="primary" onclick="saveWorker()">Save / Update Worker</button>
+<div id="workersList"></div>
+</section>
+<section class="card"><h2>Saved Days</h2><div id="history"></div></section><footer>Data is saved on this phone/browser.</footer></main>
+<script>
+const KEY='jk_profit_tracker_v1',money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2}),today=()=>new Date().toISOString().slice(0,10);let entries=JSON.parse(localStorage.getItem(KEY)||'[]');date.value=today();
+function calc(e){let sales=+e.online + +e.cash,totalExpenses=+e.expense + +e.chicken + +e.salary,profit=sales-totalExpenses;return {...e,sales,totalExpenses,profit,margin:sales?profit/sales*100:0}}
+function saveEntry(){let e=calc({date:date.value||today(),expense:+expense.value||0,chicken:+chicken.value||0,salary:+salary.value||0,online:+online.value||0,cash:+cash.value||0});entries=entries.filter(x=>x.date!==e.date);entries.push(e);entries.sort((a,b)=>b.date.localeCompare(a.date));localStorage.setItem(KEY,JSON.stringify(entries));render();alert('Saved successfully 👍')}
+
+const WORKER_KEY='jk_workers_v1';
+let workers=JSON.parse(localStorage.getItem(WORKER_KEY)||'[]');
+
+function saveWorker(){
+  const name=workerName.value.trim(), address=workerAddress.value.trim();
+  if(!name){alert('Please enter worker name.');return}
+  const old=workers.find(w=>w.name.toLowerCase()===name.toLowerCase());
+  if(old){old.name=name;old.address=address}
+  else workers.push({name,address});
+  localStorage.setItem(WORKER_KEY,JSON.stringify(workers));
+  workerName.value=''; workerAddress.value=''; renderWorkers();
+  alert('Worker saved 👍');
+}
+function editWorker(i){
+  workerName.value=workers[i].name; workerAddress.value=workers[i].address||'';
+  workers.splice(i,1);
+  localStorage.setItem(WORKER_KEY,JSON.stringify(workers)); renderWorkers();
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+function deleteWorker(i){
+  if(confirm('Delete this worker?')){
+    workers.splice(i,1); localStorage.setItem(WORKER_KEY,JSON.stringify(workers)); renderWorkers();
+  }
+}
+function renderWorkers(){
+  workersList.innerHTML=workers.length ? workers.map((w,i)=>`
+    <div class="row"><span><b>${w.name}</b><br><small>${w.address||'No address added'}</small></span>
+    <span><button class="secondary" onclick="editWorker(${i})">Edit</button>
+    <button class="secondary" onclick="deleteWorker(${i})">Delete</button></span></div>`).join('') :
+    '<p>No workers added yet.</p>';
+}
+function render(){let d=entries.find(x=>x.date===date.value)||calc({expense:0,chicken:0,salary:0,online:0,cash:0});expense.value=d.expense||'';chicken.value=d.chicken||'';salary.value=d.salary||'';online.value=d.online||'';cash.value=d.cash||'';sales.textContent=money(d.sales);expenses.textContent=money(d.expense);chickenOut.textContent=money(d.chicken);salaryOut.textContent=money(d.salary);profit.textContent=money(d.profit);margin.textContent=(d.margin||0).toFixed(1)+'%';let now=new Date(date.value||today()),w=0,wp=0,m=0,mp=0;entries.forEach(e=>{e.chicken=+e.chicken||0;e.salary=+e.salary||0;e.totalExpenses=+e.expense+e.chicken+e.salary;e.profit=e.sales-e.totalExpenses;let diff=(now-new Date(e.date))/86400000;if(diff>=0&&diff<7){w+=e.sales;wp+=e.profit}if(diff>=0&&diff<30){m+=e.sales;mp+=e.profit}});weekSales.textContent=money(w);weekProfit.textContent=money(wp);monthSales.textContent=money(m);monthProfit.textContent=money(mp);history.innerHTML=entries.length?entries.map(e=>`<div class="row"><span><b>${e.date}</b><br><small>Sales ${money(e.sales)} • Expense ${money(e.expense)}</small></span><b class="${e.profit<0?'danger':''}">${money(e.profit)}</b></div>`).join(''):'<p>No saved days yet.</p>'}
+date.addEventListener('change',render);
+function shareReport(){let d=entries.find(x=>x.date===date.value);if(!d){alert('Save this day first.');return}let t=`🥤 JK COOL DRINKS\nDaily Business Report\nDate: ${d.date}\n\nOnline Sales: ${money(d.online)}\nCash Sales: ${money(d.cash)}\nTotal Sales: ${money(d.sales)}\nOther Expenses: ${money(d.expense)}\nChicken Bill: ${money(d.chicken)}\nWorker Salary: ${money(d.salary)}\nTotal Expenses: ${money(d.totalExpenses)}\nProfit: ${money(d.profit)}\nProfit Margin: ${d.margin.toFixed(1)}%`;if(navigator.share)navigator.share({title:'JK Cool Drinks Report',text:t});else navigator.clipboard.writeText(t).then(()=>alert('Report copied. Paste it in WhatsApp.'))}
+function clearAll(){if(confirm('Delete all saved business data from this phone?')){entries=[];localStorage.removeItem(KEY);render()}}render();renderWorkers();
+</script></body></html>
